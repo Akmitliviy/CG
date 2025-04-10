@@ -1,0 +1,20 @@
+C:\Users\Akmitliviy\AppData\Local\Programs\CLion\bin\cmake\win\x64\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=C:/Users/Akmitliviy/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe "-DCMAKE_TOOLCHAIN_FILE=C:/Program Files/vcpkg/scripts/buildsystems/vcpkg.cmake" -G Ninja -S E:\A_University\A_term6\CG\Labs\Lab03\RectangleR_Shaders -B E:\A_University\A_term6\CG\Labs\Lab03\RectangleR_Shaders\cmake-build-debug
+-- The C compiler identification is GNU 13.1.0
+-- The CXX compiler identification is GNU 13.1.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Akmitliviy/AppData/Local/Programs/CLion/bin/mingw/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Users/Akmitliviy/AppData/Local/Programs/CLion/bin/mingw/bin/g++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found GLUT: optimized;C:/Program Files/vcpkg/installed/x64-windows/lib/freeglut.lib;debug;C:/Program Files/vcpkg/installed/x64-windows/debug/lib/freeglutd.lib
+-- Configuring done (1.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: E:/A_University/A_term6/CG/Labs/Lab03/RectangleR_Shaders/cmake-build-debug

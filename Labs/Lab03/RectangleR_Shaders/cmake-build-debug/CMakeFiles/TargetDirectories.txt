@@ -1,0 +1,3 @@
+E:/A_University/A_term6/CG/Labs/Lab03/RectangleR_Shaders/cmake-build-debug/CMakeFiles/RectangleR_Shaders.dir
+E:/A_University/A_term6/CG/Labs/Lab03/RectangleR_Shaders/cmake-build-debug/CMakeFiles/edit_cache.dir
+E:/A_University/A_term6/CG/Labs/Lab03/RectangleR_Shaders/cmake-build-debug/CMakeFiles/rebuild_cache.dir
