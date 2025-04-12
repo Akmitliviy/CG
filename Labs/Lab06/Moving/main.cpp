@@ -1,4 +1,4 @@
-﻿#include <GL/glut.h>
+#include <GL/glut.h>
 #include <cmath>
 #include <iostream>
 #include <ostream>
@@ -11,6 +11,32 @@ GLuint textureID;
 
 float rotationAngle = 0.0f;
 
+float sceneLimit = 10.0f; // межі +- по кожній осі
+float rotationSpeed = 0.5f;
+float movementSpeed = 0.05f;
+
+struct MovingObject {
+    float x, y, z;
+    float dx, dy, dz;
+    float r, g, b;
+
+    void update() {
+        x += dx * movementSpeed;
+        y += dy * movementSpeed;
+        z += dz * movementSpeed;
+
+        if (x > sceneLimit || x < -sceneLimit) dx *= -1;
+        if (y > sceneLimit || y < -sceneLimit) dy *= -1;
+        if (z > sceneLimit || z < -sceneLimit) dz *= -1;
+    }
+
+    void applyColor() {
+        glColor3f(r, g, b);
+    }
+};
+
+MovingObject coneObj = {0, 0, 0, 1, 1, 0.5f, 1, 0, 0};
+MovingObject cylObj  = {0, 0, 0, 1, 1, 0.5f, 1, 1, 1};
 
 struct transform {
     GLdouble yaw = 0.0f;
@@ -29,9 +55,9 @@ struct transform {
     float panOffsetZ = 0.0f;
 } SceneTransform;
 
-bool ambient = true;
-bool directional = true;
-bool point = true;
+bool ambient = false;
+bool directional = false;
+bool point = false;
 bool spot = true;
 
 float pointLightX = 2.0f;
@@ -120,7 +146,7 @@ void setupPointLight() {
     if (point) {
         glEnable(GL_LIGHT1);
         GLfloat lightColor[] = { 1.0f, 0.8f, 0.8f, 1.0f };
-        GLfloat lightPos[] = { pointLightX, 3.0f, 2.0f, 1.0f };
+        GLfloat lightPos[] = { pointLightX, 10.0f, 2.0f, 1.0f };
 
         glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor);
         glLightfv(GL_LIGHT1, GL_POSITION, lightPos);
@@ -138,8 +164,8 @@ void setupPointLight() {
 void setupSpotlight() {
     if (spot) {
         glEnable(GL_LIGHT2);
-        GLfloat lightColor[] = { 1.0f, 1.0f, 0.6f, 1.0f };
-        GLfloat lightPos[] = { spotLightX, 3.0f, 0.0f, 1.0f };
+        GLfloat lightColor[] = { 0.4f, 0.4f, 0.1f, 0.01f };
+        GLfloat lightPos[] = { spotLightX, 10.0f, 0.0f, 0.0f };
         GLfloat spotDir[] = { 0.0f, -1.0f, 0.0f };
 
         glLightfv(GL_LIGHT2, GL_DIFFUSE, lightColor);
@@ -158,12 +184,14 @@ void setupSpotlight() {
 }
 
 
-void drawCone() {
+void drawCone(MovingObject& obj) {
     GLUquadric* quad = gluNewQuadric();
     gluQuadricNormals(quad, GLU_SMOOTH);
 
     glPushMatrix();
     glColor3f(1.0f, 0.0f, 0.0f); // Червоний
+
+    glTranslatef(obj.x, obj.y, obj.z);
     glRotatef(-90, 1, 0, 0); // Щоб стояв вертикально
     gluCylinder(quad, 1.0, 0.0, 2.0, 32, 32);
     glPopMatrix();
@@ -171,7 +199,20 @@ void drawCone() {
     gluDeleteQuadric(quad);
 }
 
-void drawCylinder() {
+void applyLightning() {
+    setupAmbientLight();
+    setupDirectionalLight();
+    setupPointLight();
+    setupSpotlight();
+
+    GLfloat diffuse[] = {0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, 30.0f);
+}
+
+void drawCylinder(MovingObject& obj) {
     GLUquadric* quad = gluNewQuadric();
     gluQuadricNormals(quad, GLU_SMOOTH);
     gluQuadricTexture(quad, GL_TRUE); // Дозволити текстуру
@@ -182,8 +223,13 @@ void drawCylinder() {
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     glColor3f(1.0f, 1.0f, 1.0f);
-    glTranslatef(0.0f, 1.0f, -1.0f);
+
+    glTranslatef(obj.x, obj.y + 1.0f, obj.z - 1.0f);
     glRotatef(90, 0, 0, 1);
+    glTranslatef(0.0f, 0.0f, 1.0f);
+
+    glRotatef(rotationAngle, 1.0f, 0.0f, 0.0f); // Обертання об’єкта
+    glTranslatef(0.0f, 0.0f, -1.0f);
 
     gluCylinder(quad, 0.2, 0.2, 2.0, 32, 32);
 
@@ -193,7 +239,46 @@ void drawCylinder() {
     gluDeleteQuadric(quad);
 }
 
-
+void drawCube() {
+    glPushMatrix();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(sceneLimit, -sceneLimit, -sceneLimit);
+        glVertex3f(sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, -sceneLimit);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(-sceneLimit, -sceneLimit, -sceneLimit);
+        glVertex3f(-sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(-sceneLimit, sceneLimit, sceneLimit);
+        glVertex3f(-sceneLimit, sceneLimit, -sceneLimit);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(-sceneLimit, sceneLimit, -sceneLimit);
+        glVertex3f(-sceneLimit, sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, -sceneLimit);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(-sceneLimit, -sceneLimit, -sceneLimit);
+        glVertex3f(-sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, -sceneLimit, -sceneLimit);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(-sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, -sceneLimit, sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, sceneLimit);
+        glVertex3f(-sceneLimit, sceneLimit, sceneLimit);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(-sceneLimit, -sceneLimit, -sceneLimit);
+        glVertex3f(sceneLimit, -sceneLimit, -sceneLimit);
+        glVertex3f(sceneLimit, sceneLimit, -sceneLimit);
+        glVertex3f(-sceneLimit, sceneLimit, -sceneLimit);
+    glEnd();
+    glPopMatrix();
+}
 
 void updateCamera() {
     glLoadIdentity();
@@ -226,15 +311,11 @@ void display() {
 
     updateCamera();
 
-    setupAmbientLight();
-    setupDirectionalLight();
-    setupPointLight();
-    setupSpotlight();
+    applyLightning();
 
-    glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f); // Обертання об’єкта
-
-    drawCone();
-    drawCylinder();
+    drawCone(coneObj);
+    drawCylinder(cylObj);
+    drawCube();
 
     glutSwapBuffers();
 }
@@ -248,12 +329,67 @@ void reshape(int w, int h) {
 }
 
 void timer(int value) {
-    rotationAngle += 0.5f;
+    rotationAngle += rotationSpeed;
     if (rotationAngle > 360.0f)
         rotationAngle -= 360.0f;
 
+    coneObj.update();
+    cylObj.update();
+
     glutPostRedisplay();
     glutTimerFunc(16, timer, 0); // ~60 FPS
+}
+
+void menu(int item) {
+    switch (item) {
+        case 1: movementSpeed = 0.01f; break;
+        case 2: movementSpeed = 0.05f; break;
+        case 3: movementSpeed = 0.1f; break;
+        case 4: rotationSpeed = 1.0f; break;
+        case 5: rotationSpeed = 0.5f; break;
+        case 6: rotationSpeed = 0.0f; break;
+        case 7: sceneLimit = 5.0f; break;
+        case 8: sceneLimit = 10.0f; break;
+        case 9: sceneLimit = 20.0f; break;
+        case 11: ambient = !ambient; break;
+        case 12: directional = !directional; break;
+        case 13: point = !point; break;
+        case 14: spot = !spot; break;
+        case 10: exit(0); break;
+    }
+    glutPostRedisplay();
+}
+
+void createMenu() {
+    int moveSpeedMenu = glutCreateMenu(menu);
+    glutAddMenuEntry("0.01", 1);
+    glutAddMenuEntry("0.05", 2);
+    glutAddMenuEntry("0.1", 3);
+
+    int rotSpeedMenu = glutCreateMenu(menu);
+    glutAddMenuEntry("1.0", 4);
+    glutAddMenuEntry("0.5", 5);
+    glutAddMenuEntry("0.0", 6);
+
+    int sceneSizeMenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Cube +-5", 7);
+    glutAddMenuEntry("Cube +-10", 8);
+    glutAddMenuEntry("Cube +-20", 9);
+
+    int lightMenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Toggle Ambient", 11);
+    glutAddMenuEntry("Toggle Directional", 12);
+    glutAddMenuEntry("Toggle Point", 13);
+    glutAddMenuEntry("Toggle Spot", 14);
+
+    glutCreateMenu(menu);
+    glutAddSubMenu("Movement Speed", moveSpeedMenu);
+    glutAddSubMenu("Rotation Speed", rotSpeedMenu);
+    glutAddSubMenu("Scene Limits", sceneSizeMenu);
+    glutAddSubMenu("Lighting", lightMenu);
+    glutAddMenuEntry("Exit", 10);
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 void updateCoordinates() {
@@ -428,6 +564,9 @@ int main(int argc, char** argv) {
     glutCreateWindow("Cone + Cylinder Base Scene");
 
     init();
+
+    createMenu();
+
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
